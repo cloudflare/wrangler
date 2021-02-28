@@ -420,8 +420,8 @@ impl Manifest {
                 &format!("You will need to update the following fields in the created {} file before continuing:", toml_msg)
             );
             StdOut::help(&format!(
-                "You can find your {} in the right sidebar of your account's Workers page, and {} in the right sidebar of a zone's overview tab at {}",
-                account_id_msg, zone_id_msg, dash_url
+                "You can find your {} in the right sidebar of your account's Workers page, and {} in the right sidebar of a zone's overview tab at {} (if you have only a workers.dev domain, you can skip adding the {} )",
+                account_id_msg, zone_id_msg, dash_url, zone_id_msg
             ));
             if has_top_level_fields {
                 needs_new_line = true;
