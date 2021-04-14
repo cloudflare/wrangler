@@ -1,14 +1,16 @@
 use reqwest::blocking::{Client, ClientBuilder};
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::redirect::Policy;
-use std::time::Duration;
 
-use crate::http::{feature::headers, Feature, DEFAULT_HTTP_TIMEOUT_SECONDS};
 use crate::settings::global_user::GlobalUser;
+use crate::{
+    http::{feature::headers, Feature},
+    settings::http_config::HttpConfig,
+};
 
 // TODO: remove this and replace it entirely with cloudflare-rs
-pub fn client() -> Client {
-    builder()
+pub fn client(http_config: Option<&HttpConfig>) -> Client {
+    builder(http_config.unwrap_or(&Default::default()))
         .default_headers(headers(None))
         .build()
         .expect("could not create http client")
@@ -26,29 +28,29 @@ fn get_client(user: &GlobalUser, feature: Option<Feature>) -> Client {
     let mut headers = headers(feature);
     add_auth_headers(&mut headers, user);
 
-    builder()
+    builder(user.get_http_config())
         .default_headers(headers)
         .redirect(Policy::none())
         .build()
         .expect("could not create authenticated http client")
 }
 
-fn builder() -> ClientBuilder {
+fn builder(http_config: &HttpConfig) -> ClientBuilder {
     let builder = reqwest::blocking::Client::builder();
     builder
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(DEFAULT_HTTP_TIMEOUT_SECONDS))
+        .connect_timeout(http_config.get_connect_timeout())
+        .timeout(http_config.get_http_timeout())
 }
 
 fn add_auth_headers(headers: &mut HeaderMap, user: &GlobalUser) {
     match user {
-        GlobalUser::TokenAuth { api_token } => {
+        GlobalUser::TokenAuth { api_token, .. } => {
             headers.insert(
                 "Authorization",
                 HeaderValue::from_str(&format!("Bearer {}", &api_token)).unwrap(),
             );
         }
-        GlobalUser::GlobalKeyAuth { email, api_key } => {
+        GlobalUser::GlobalKeyAuth { email, api_key, .. } => {
             headers.insert("X-Auth-Email", HeaderValue::from_str(&email).unwrap());
             headers.insert("X-Auth-Key", HeaderValue::from_str(&api_key).unwrap());
         }

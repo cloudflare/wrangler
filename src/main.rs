@@ -666,13 +666,20 @@ fn run() -> Result<(), failure::Error> {
             // API Tokens are the default
             StdOut::billboard(&format!("To find your API Token, go to {}\nand create it using the \"Edit Cloudflare Workers\" template.\n\nConsider using {} which only requires your Cloudflare username and password.\n\nIf you are trying to use your Global API Key instead of an API Token\n{}, run {}.", api_token_url, wrangler_login_msg, not_recommended_msg, recommended_cmd_msg));
             let api_token: String = interactive::get_user_input("Enter API Token: ");
-            GlobalUser::TokenAuth { api_token }
+            GlobalUser::TokenAuth {
+                api_token,
+                http_config: Default::default(),
+            }
         } else {
             StdOut::billboard(&format!("We don't recommend using your Global API Key!\nPlease consider using an API Token instead.\n\n{}", token_support_url));
             let email: String = interactive::get_user_input("Enter Email: ");
             let api_key: String = interactive::get_user_input("Enter Global API Key: ");
 
-            GlobalUser::GlobalKeyAuth { email, api_key }
+            GlobalUser::GlobalKeyAuth {
+                email,
+                api_key,
+                http_config: Default::default(),
+            }
         };
 
         let verify = !matches.is_present("no-verify");

@@ -1,18 +1,16 @@
-use std::time::Duration;
-
 use cloudflare::framework::async_api;
 use cloudflare::framework::auth::Credentials;
 use cloudflare::framework::response::ApiFailure;
 use cloudflare::framework::{Environment, HttpApiClient, HttpApiClientConfig};
 use http::StatusCode;
 
-use crate::http::{feature::headers, Feature, DEFAULT_HTTP_TIMEOUT_SECONDS};
+use crate::http::{feature::headers, Feature};
 use crate::settings::global_user::GlobalUser;
 use crate::terminal::emoji;
 use crate::terminal::message::{Message, StdOut};
 pub fn cf_v4_client(user: &GlobalUser) -> Result<HttpApiClient, failure::Error> {
     let config = HttpApiClientConfig {
-        http_timeout: Duration::from_secs(DEFAULT_HTTP_TIMEOUT_SECONDS),
+        http_timeout: user.get_http_config().get_http_timeout(),
         default_headers: headers(None),
     };
 
@@ -28,7 +26,7 @@ pub fn featured_cf_v4_client(
     feature: Feature,
 ) -> Result<HttpApiClient, failure::Error> {
     let config = HttpApiClientConfig {
-        http_timeout: Duration::from_secs(DEFAULT_HTTP_TIMEOUT_SECONDS),
+        http_timeout: user.get_http_config().get_http_timeout(),
         default_headers: headers(Some(feature)),
     };
 

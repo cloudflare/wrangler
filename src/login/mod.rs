@@ -46,6 +46,7 @@ pub fn run() -> Result<(), failure::Error> {
 
     let user = GlobalUser::TokenAuth {
         api_token: token.to_string(),
+        http_config: Default::default(),
     };
     global_config(&user, true)?;
 

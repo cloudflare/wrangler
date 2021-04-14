@@ -80,7 +80,11 @@ impl MockEnvironment {
 impl QueryEnvironment for MockEnvironment {
     #[allow(unused_variables)]
     fn get_var(&self, var: &'static str) -> Result<String, std::env::VarError> {
-        Ok("Some Mocked Result".to_string()) // Returns a mocked response
+        if self.vars.iter().any(|&(key, _)| key == var) {
+            Ok("Some Mocked Result".to_string()) // Returns a mocked response
+        } else {
+            Err(std::env::VarError::NotPresent)
+        }
     }
 
     fn empty(&self) -> Result<bool, failure::Error> {

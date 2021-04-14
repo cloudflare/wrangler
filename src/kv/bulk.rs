@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use indicatif::ProgressBar;
 
 use cloudflare::endpoints::workerskv::delete_bulk::DeleteBulk;
@@ -24,7 +22,7 @@ const UPLOAD_MAX_SIZE: usize = 50 * 1024 * 1024;
 // can be lengthy if payloads are large.
 fn bulk_api_client(user: &GlobalUser) -> Result<HttpApiClient, failure::Error> {
     let config = HttpApiClientConfig {
-        http_timeout: Duration::from_secs(5 * 60),
+        http_timeout: user.get_http_config().get_bulk_timeout(),
         default_headers: headers(None),
     };
 

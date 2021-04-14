@@ -3,7 +3,6 @@ use std::path::Path;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
-use crate::http;
 use crate::kv::bulk;
 use crate::settings::global_user::GlobalUser;
 use crate::settings::toml::Target;
@@ -11,6 +10,7 @@ use crate::sites::{add_namespace, sync, AssetManifest};
 use crate::terminal::message::{Message, StdOut};
 use crate::terminal::styles;
 use crate::upload;
+use crate::{http, settings::http_config::HttpConfig};
 
 #[derive(Debug, Deserialize)]
 struct Preview {
@@ -95,7 +95,7 @@ pub fn upload(
                     failure::bail!(SITES_UNAUTH_PREVIEW_ERR)
                 }
 
-                unauthenticated_upload(&target)?
+                unauthenticated_upload(&target, Some(user.get_http_config()))?
             }
         }
         None => {
@@ -112,7 +112,7 @@ pub fn upload(
                 failure::bail!(SITES_UNAUTH_PREVIEW_ERR)
             }
 
-            unauthenticated_upload(&target)?
+            unauthenticated_upload(&target, None)?
         }
     };
 
@@ -177,7 +177,10 @@ fn authenticated_upload(
     Ok(Preview::from(response.result))
 }
 
-fn unauthenticated_upload(target: &Target) -> Result<Preview, failure::Error> {
+fn unauthenticated_upload(
+    target: &Target,
+    http_config: Option<&HttpConfig>,
+) -> Result<Preview, failure::Error> {
     let create_address = "https://cloudflareworkers.com/script";
     log::info!("address: {}", create_address);
 
@@ -200,7 +203,7 @@ fn unauthenticated_upload(target: &Target) -> Result<Preview, failure::Error> {
     }
 
     let script_upload_form = upload::form::build(&target, None, None)?;
-    let client = http::client();
+    let client = http::client(http_config);
     let res = client
         .post(create_address)
         .multipart(script_upload_form)

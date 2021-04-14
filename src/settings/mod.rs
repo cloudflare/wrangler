@@ -2,6 +2,7 @@ pub mod binding;
 mod environment;
 mod global_config;
 pub mod global_user;
+pub mod http_config;
 pub mod metadata;
 pub mod toml;
 

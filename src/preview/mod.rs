@@ -17,13 +17,13 @@ use log::info;
 use url::Url;
 use ws::{Sender, WebSocket};
 
-use crate::build::build_target;
 use crate::http;
 use crate::settings::global_user::GlobalUser;
 use crate::settings::toml::Target;
 use crate::terminal::message::{Message, StdOut};
 use crate::terminal::open_browser;
 use crate::watch::watch_and_build;
+use crate::{build::build_target, settings::http_config::HttpConfig};
 
 pub fn preview(
     mut target: Target,
@@ -58,7 +58,12 @@ pub fn preview(
         }
 
         // Make a the initial request to the URL
-        client_request(&request_payload, &script_id, sites_preview);
+        client_request(
+            &request_payload,
+            &script_id,
+            sites_preview,
+            user.as_ref().map(|u| u.get_http_config()),
+        );
 
         let broadcaster = server.broadcaster();
         thread::spawn(move || server.run());
@@ -78,7 +83,12 @@ pub fn preview(
             ))?;
         }
 
-        client_request(&request_payload, &script_id, sites_preview);
+        client_request(
+            &request_payload,
+            &script_id,
+            sites_preview,
+            user.as_ref().map(|u| u.get_http_config()),
+        );
     }
 
     Ok(())
@@ -93,8 +103,13 @@ pub struct PreviewOpt {
     pub headless: bool,
 }
 
-fn client_request(payload: &RequestPayload, script_id: &str, sites_preview: bool) {
-    let client = http::client();
+fn client_request(
+    payload: &RequestPayload,
+    script_id: &str,
+    sites_preview: bool,
+    http_config: Option<&HttpConfig>,
+) {
+    let client = http::client(http_config);
 
     let method = &payload.method;
     let url = &payload.service_url;
@@ -176,7 +191,12 @@ fn watch_for_changes(
                 }
             }
 
-            client_request(&request_payload, &script_id, sites_preview);
+            client_request(
+                &request_payload,
+                &script_id,
+                sites_preview,
+                user.map(|u| u.get_http_config()),
+            );
         }
     }
 
