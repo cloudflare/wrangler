@@ -26,9 +26,36 @@ fn it_can_preview_js_project() {
         }
     "#,
     );
+
+    let wrangler_toml = WranglerToml::javascript("test-preview-javascript", "index.js");
+    fixture.create_wrangler_toml(wrangler_toml);
+
+    preview_succeeds(&fixture);
+}
+
+#[test]
+fn it_can_preview_js_project_with_package_json() {
+    let fixture = Fixture::new();
+    fixture.create_file(
+        "index.js",
+        r#"
+        addEventListener('fetch', event => {
+            event.respondWith(handleRequest(event.request))
+        })
+
+        /**
+        * Fetch and log a request
+        * @param {Request} request
+        */
+        async function handleRequest(request) {
+            return new Response('Hello worker!', { status: 200 })
+        }
+    "#,
+    );
+
     fixture.create_default_package_json();
 
-    let wrangler_toml = WranglerToml::javascript("test-preview-javascript");
+    let wrangler_toml = WranglerToml::javascript("test-preview-javascript", "");
     fixture.create_wrangler_toml(wrangler_toml);
 
     preview_succeeds(&fixture);
@@ -187,9 +214,8 @@ fn it_can_preview_using_url_flag() {
         }
     "#,
     );
-    fixture.create_default_package_json();
 
-    let wrangler_toml = WranglerToml::javascript("test-preview-javascript");
+    let wrangler_toml = WranglerToml::javascript("test-preview-javascript", "index.js");
     fixture.create_wrangler_toml(wrangler_toml);
 
     // URLs should match as expected
@@ -214,11 +240,10 @@ fn it_previews_with_config_text() {
         }
     "#,
     );
-    fixture.create_default_package_json();
 
     let test_value: &'static str = "sdhftiuyrtdhfjgpoopuyrdfjgkyitudrhf";
 
-    let mut wrangler_toml = WranglerToml::javascript("test-preview-with-config");
+    let mut wrangler_toml = WranglerToml::javascript("test-preview-with-config", "index.js");
     let mut config: HashMap<&'static str, &'static str> = HashMap::new();
     config.insert("CONFIG_TEST", test_value);
     wrangler_toml.vars = Some(config);
@@ -242,12 +267,11 @@ fn it_previews_with_text_blob() {
         }
     "#,
     );
-    fixture.create_default_package_json();
 
     let test_value: &'static str = "sdhftiuyrtdhfjgpoopuyrdfjgkyitudrhf";
     fixture.create_file("blob.txt", test_value);
 
-    let mut wrangler_toml = WranglerToml::javascript("test-preview-with-config");
+    let mut wrangler_toml = WranglerToml::javascript("test-preview-with-config", "index.js");
     let mut blobs: HashMap<&'static str, &'static str> = HashMap::new();
     blobs.insert("BLOB", "blob.txt");
     wrangler_toml.text_blobs = Some(blobs);

@@ -120,6 +120,7 @@ mod tests {
                 },
             ],
             name: "test-target".to_string(),
+            main: "".to_string(),
             target_type: TargetType::Webpack,
             webpack_config: None,
             site: None,

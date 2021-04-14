@@ -33,6 +33,8 @@ pub struct Manifest {
     #[serde(rename = "type")]
     pub target_type: TargetType,
     #[serde(default)]
+    pub main: String,
+    #[serde(default)]
     pub account_id: String,
     pub workers_dev: Option<bool>,
     #[serde(default, with = "string_empty_as_none")]
@@ -291,6 +293,7 @@ impl Manifest {
         */
         let mut target = Target {
             target_type,                                 // Top level
+            main: self.main.clone(),                     // Top level
             account_id: self.account_id.clone(),         // Inherited
             webpack_config: self.webpack_config.clone(), // Inherited
             // importantly, the top level name will be modified

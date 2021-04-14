@@ -13,6 +13,7 @@ pub struct Target {
     pub account_id: String,
     pub kv_namespaces: Vec<KvNamespace>,
     pub name: String,
+    pub main: String,
     pub target_type: TargetType,
     pub webpack_config: Option<String>,
     pub site: Option<Site>,

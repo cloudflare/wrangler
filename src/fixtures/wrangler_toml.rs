@@ -93,6 +93,7 @@ pub struct WranglerToml {
     pub name: Option<&'static str>,
     #[serde(rename = "type")]
     pub target_type: Option<&'static str>,
+    pub main: Option<&'static str>,
     pub account_id: Option<&'static str>,
     pub workers_dev: Option<bool>,
     pub route: Option<&'static str>,
@@ -233,11 +234,12 @@ impl WranglerToml {
         }
     }
 
-    pub fn javascript(name: &'static str) -> WranglerToml {
+    pub fn javascript(name: &'static str, main: &'static str) -> WranglerToml {
         WranglerToml {
             name: Some(name),
             workers_dev: Some(true),
             target_type: Some("javascript"),
+            main: Some(main),
             ..Default::default()
         }
     }

@@ -315,6 +315,7 @@ mod tests {
             account_id: "".to_string(),
             kv_namespaces: Vec::new(),
             name: "".to_string(),
+            main: "".to_string(),
             target_type: TargetType::JavaScript,
             webpack_config: None,
             site: Some(site),

@@ -72,10 +72,21 @@ pub fn build(
         }
         TargetType::JavaScript => {
             log::info!("JavaScript project detected. Publishing...");
-            let build_dir = target.build_dir()?;
-            let package = Package::new(&build_dir)?;
+            let mut script_path = target.build_dir()?;
 
-            let script_path = package.main(&build_dir)?;
+            if !target.main.is_empty() {
+                // use main key from wrangler.toml
+                script_path.push(&target.main);
+
+                if !std::path::Path::new(&script_path).exists() {
+                    failure::bail!("The file {} does not exist. Please set a vaild file in the 'main' key of wrangler.toml", target.main);
+                }
+            } else {
+                let build_dir = target.build_dir()?;
+                let package = Package::new(&build_dir)?;
+
+                script_path = package.main(&build_dir)?;
+            }
 
             let assets = ProjectAssets::new(
                 script_path,
