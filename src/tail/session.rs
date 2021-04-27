@@ -2,11 +2,10 @@ use std::str;
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
-use regex::Regex;
 use tokio::sync::oneshot::{Receiver, Sender};
-use tokio::time::{delay_for, Delay};
+use tokio::time::delay_for;
 
-use cloudflare::endpoints::workers::{CreateTail, CreateTailParams, DeleteTail, SendTailHeartbeat};
+use cloudflare::endpoints::workers::{CreateTail, DeleteTail, SendTailHeartbeat};
 use cloudflare::framework::HttpApiClientConfig;
 use cloudflare::framework::{async_api, async_api::ApiClient};
 
@@ -14,7 +13,7 @@ use crate::http;
 use crate::settings::global_user::GlobalUser;
 use crate::settings::toml::Target;
 
-const KEEP_ALIVE_INTERVAL: u64 = 60;
+const KEEP_ALIVE_INTERVAL: u64 = 15;
 
 pub struct Session {
     tail_id: Option<String>,
@@ -29,8 +28,8 @@ impl Session {
         target: Target,
         user: GlobalUser,
         shutdown_rx: Receiver<()>,
-        tx: Sender<()>,
-        metrics_port: u16,
+        shutdown_tx: Sender<()>,
+        tail_id_tx: Sender<String>,
         verbose: bool,
     ) -> Result<(), failure::Error> {
         // During the start process we'll populate the tail with the response from the API.
@@ -38,7 +37,7 @@ impl Session {
         // We need to exit on a shutdown command without waiting for API calls to complete.
         tokio::select! {
             _ = shutdown_rx => { session.close(&user, &target).await }
-            result = session.start(&target, &user, tx, metrics_port, verbose) => { result }
+            result = session.start(&target, &user, shutdown_tx, tail_id_tx, verbose) => { result }
         }
     }
 
@@ -64,8 +63,8 @@ impl Session {
         &mut self,
         target: &Target,
         user: &GlobalUser,
-        tx: Sender<()>,
-        metrics_port: u16,
+        shutdown_tx: Sender<()>,
+        tail_id_tx: Sender<String>,
         verbose: bool,
     ) -> Result<(), failure::Error> {
         let style = ProgressStyle::default_spinner().template("{spinner}   {msg}");
@@ -81,22 +80,23 @@ impl Session {
 
         let client = http::cf_v4_api_client_async(user, HttpApiClientConfig::default())?;
 
-        // TODO: make Tunnel struct responsible for getting its own port!
-        let url = get_tunnel_url(metrics_port).await?;
         let response = client
             .request(&CreateTail {
                 account_identifier: &target.account_id,
                 script_name: &target.name,
-                params: CreateTailParams { url },
+                params: Default::default(),
             })
             .await;
 
         match response {
             Ok(success) => {
-                spinner.abandon_with_message("Now prepared to stream logs.");
-
                 let tail_id = success.result.id;
                 self.tail_id = Some(tail_id.clone());
+                tail_id_tx
+                    .send(tail_id.clone())
+                    .map_err(|_| failure::err_msg("Failed to send the tail ID to the logger!"))?;
+
+                spinner.abandon_with_message("Now prepared to stream logs.");
 
                 // Loop indefinitely to send "heartbeat" to API and keep log streaming alive.
                 // This should loop forever until SIGINT is issued or Wrangler process is killed
@@ -114,77 +114,11 @@ impl Session {
                 }
             }
             Err(e) => {
-                tx.send(()).unwrap();
+                shutdown_tx.send(()).unwrap();
                 failure::bail!(http::format_error(e, Some(&tail_help)))
             }
         }
     }
-}
-
-async fn get_tunnel_url(metrics_port: u16) -> Result<String, failure::Error> {
-    // regex for extracting url from cloudflared metrics port.
-    let url_regex = Regex::new("userHostname=\"(https://[a-z.-]+)\"").unwrap();
-
-    struct RetryDelay {
-        delay: Delay,
-        attempt: u64,
-        max_attempts: u64,
-    }
-
-    // This retry loop retries retrieving the cloudflared endpoint url from the cloudflared /metrics
-    // until it gets the URL or has tried retrieving the URL over 5 times.
-    impl RetryDelay {
-        fn new(max_attempts: u64) -> RetryDelay {
-            RetryDelay {
-                delay: delay_for(Duration::from_millis(0)),
-                attempt: 0,
-                max_attempts,
-            }
-        }
-
-        // our retry delay is an [exponential backoff](https://en.wikipedia.org/wiki/Exponential_backoff),
-        // which simply waits twice as long between each attempt to avoid hammering the LogServer.
-        fn reset(self) -> RetryDelay {
-            let attempt = self.attempt + 1;
-            let delay = delay_for(Duration::from_millis(attempt * attempt * 1000));
-            let max_attempts = self.max_attempts;
-
-            RetryDelay {
-                attempt,
-                delay,
-                max_attempts,
-            }
-        }
-
-        fn expired(&self) -> bool {
-            self.attempt > self.max_attempts
-        }
-
-        fn is_elapsed(&self) -> bool {
-            self.delay.is_elapsed()
-        }
-    }
-
-    let mut delay = RetryDelay::new(5);
-
-    while !delay.expired() {
-        if delay.is_elapsed() {
-            let metrics_url = format!("http://localhost:{}/metrics", metrics_port);
-            if let Ok(resp) = reqwest::get(&metrics_url).await {
-                let body = resp.text().await?;
-
-                if let Some(capture) = url_regex.captures(&body) {
-                    if let Some(url) = capture.get(1) {
-                        return Ok(url.as_str().to_string());
-                    }
-                }
-            }
-
-            delay = delay.reset();
-        }
-    }
-
-    failure::bail!("Could not extract tunnel url from cloudflared")
 }
 
 async fn send_heartbeat(

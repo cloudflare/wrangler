@@ -18,7 +18,7 @@ binary-install = "0.0.3-alpha.1"
 chrome-devtools-rs = { version = "=0.0.0-alpha.1", features = ["color"] }
 chrono = "0.4.19"
 clap = "2.33.3"
-cloudflare = "0.6.6"
+cloudflare = { git = "https://github.com/cloudflare/cloudflare-rs", branch = "wrangler-hotfix" } # BAD
 config = "0.10.1"
 console = "0.13.0"
 dirs = "3.0.1"

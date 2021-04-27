@@ -132,6 +132,20 @@ impl From<GlobalUser> for Credentials {
     }
 }
 
+impl From<&GlobalUser> for Credentials {
+    fn from(user: &GlobalUser) -> Credentials {
+        match user {
+            GlobalUser::TokenAuth { api_token } => Credentials::UserAuthToken {
+                token: api_token.clone(),
+            },
+            GlobalUser::GlobalKeyAuth { email, api_key } => Credentials::UserAuthKey {
+                key: api_key.clone(),
+                email: email.clone(),
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

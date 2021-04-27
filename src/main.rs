@@ -638,19 +638,6 @@ fn run() -> Result<(), failure::Error> {
                         .long("env")
                         .takes_value(true)
                 )
-                .arg(
-                    Arg::with_name("tunnel_port")
-                        .help("port to accept tail log requests")
-                        .short("p")
-                        .long("port")
-                        .takes_value(true)
-                )
-                .arg(
-                    Arg::with_name("metrics_port")
-                        .help("provides endpoint for cloudflared metrics. used to retrieve tunnel url")
-                        .long("metrics")
-                        .takes_value(true)
-                )
                 .arg(verbose_arg.clone())
         )
         .subcommand(
@@ -1138,16 +1125,9 @@ fn run() -> Result<(), failure::Error> {
         let target = manifest.get_target(env, is_preview)?;
         let user = settings::global_user::GlobalUser::new()?;
 
-        let tunnel_port: Option<u16> = matches
-            .value_of("tunnel_port")
-            .map(|p| p.parse().expect("--port expects a number"));
-        let metrics_port: Option<u16> = matches
-            .value_of("metrics_port")
-            .map(|p| p.parse().expect("--metrics expects a number"));
-
         let verbose = matches.is_present("verbose");
 
-        commands::tail::start(&target, &user, format, tunnel_port, metrics_port, verbose)?;
+        commands::tail::start(&target, &user, format, verbose)?;
     } else if matches.subcommand_matches("login").is_some() {
         commands::login::run()?;
     }

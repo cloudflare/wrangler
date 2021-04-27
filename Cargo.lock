@@ -355,8 +355,7 @@ dependencies = [
 [[package]]
 name = "cloudflare"
 version = "0.6.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c21d29d422d6742bc0beb77298e0288c684dc71ac2159f4fad3b1fef2c9168"
+source = "git+https://github.com/cloudflare/cloudflare-rs?branch=wrangler-hotfix#6994965df085a34747f291cc3a02fd7f25e9cbd5"
 dependencies = [
  "async-trait",
  "chrono",
