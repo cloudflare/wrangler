@@ -22,6 +22,7 @@ use rand::{thread_rng, Rng};
 use semver::Version;
 
 use crate::install;
+use crate::settings::tools::get_tool_path;
 use crate::settings::toml::Target;
 use crate::terminal::message::{Message, StdErr, StdOut};
 use crate::upload::package::Package;
@@ -290,7 +291,11 @@ fn get_source_dir() -> PathBuf {
 }
 
 // Install {wranglerjs} from our GitHub releases
-fn install() -> Result<PathBuf, failure::Error> {
+pub fn install() -> Result<PathBuf, failure::Error> {
+    let preinstalled_path = get_tool_path("wrangler-js".to_string())?;
+    if preinstalled_path.is_some() {
+        return Ok(preinstalled_path.unwrap());
+    }
     let wranglerjs_path = if install::target::DEBUG {
         let source_path = get_source_dir();
         let wranglerjs_path = source_path.join("wranglerjs");

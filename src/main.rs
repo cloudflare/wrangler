@@ -655,7 +655,18 @@ fn run() -> Result<(), failure::Error> {
         )
         .subcommand(
             SubCommand::with_name("login")
-                .about(&*format!("{} Authenticate Wrangler with your Cloudflare username and password", emoji::UNLOCKED)))
+                .about(&*format!("{} Authenticate Wrangler with your Cloudflare username and password", emoji::UNLOCKED))
+        )
+        .subcommand(
+            SubCommand::with_name("preinstall")
+                .arg(
+                    Arg::with_name("tool")
+                        .help("name of tool to preinstall (currently only \"wrangler-js\" supported)")
+                        .required(true)
+                        .takes_value(true)
+                )
+                .about(&*format!("preinstall wrangler dependencies ahead of build/publish"))
+        )
         .get_matches();
 
     let mut is_preview = false;
@@ -1150,6 +1161,11 @@ fn run() -> Result<(), failure::Error> {
         commands::tail::start(&target, &user, format, tunnel_port, metrics_port, verbose)?;
     } else if matches.subcommand_matches("login").is_some() {
         commands::login::run()?;
+    } else if matches.subcommand_matches("preinstall").is_some() {
+        let tool = matches
+            .subcommand_matches("preinstall").unwrap()
+            .value_of("tool").unwrap();
+        commands::preinstall::preinstall(tool)?;
     }
     Ok(())
 }
