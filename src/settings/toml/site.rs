@@ -44,7 +44,11 @@ impl Site {
 
         if !entry_point.exists() {
             log::info!("Generating a new workers site project");
-            run_generate(entry_point.file_name().unwrap().to_str().unwrap(), template)?;
+            run_generate(
+                entry_point.file_name().unwrap().to_str().unwrap(),
+                template,
+                None,
+            )?;
 
             // This step is to prevent having a git repo within a git repo after
             // generating the scaffold into an existing project.

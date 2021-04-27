@@ -10,6 +10,7 @@ use crate::{commands, install};
 pub fn generate(
     name: &str,
     template: &str,
+    branch: Option<&str>,
     target_type: Option<TargetType>,
     site: bool,
 ) -> Result<(), failure::Error> {
@@ -31,7 +32,7 @@ pub fn generate(
     };
 
     log::info!("Generating a new worker project with name '{}'", new_name);
-    run_generate(&new_name, template)?;
+    run_generate(&new_name, template, branch)?;
 
     let config_path = PathBuf::from("./").join(&name);
     // TODO: this is tightly coupled to our site template. Need to remove once
@@ -46,10 +47,21 @@ pub fn generate(
     Ok(())
 }
 
-pub fn run_generate(name: &str, template: &str) -> Result<(), failure::Error> {
+pub fn run_generate(
+    name: &str,
+    template: &str,
+    optional_branch: Option<&str>,
+) -> Result<(), failure::Error> {
     let binary_path = install::install_cargo_generate()?;
-
-    let args = ["generate", "--git", template, "--name", name, "--force"];
+    let args = if let Some(branch) = optional_branch {
+        [
+            "generate", "--git", template, "--branch", branch, "--name", name, "--force",
+        ]
+    } else {
+        [
+            "generate", "--git", template, "", "", "--name", name, "--force",
+        ]
+    };
 
     let command = command(binary_path, &args);
     let command_name = format!("{:?}", command);

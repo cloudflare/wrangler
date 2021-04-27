@@ -19,7 +19,6 @@ You have many options to install wrangler!
 
 We strongly recommend you install `npm` with a Node version manager like [`nvm`](https://github.com/nvm-sh/nvm#installing-and-updating), which puts the global `node_modules` in your home directory to eliminate permissions issues with `npm install -g`. Distribution-packaged `npm` installs often use `/usr/lib/node_modules` (which is root) for globally installed `npm` packages, and running `npm install -g` as `root` prevents `wrangler` from installing properly.
 
-
 Once you've installed `nvm` and configured your system to use the `nvm` managed node install, run:
 
 ```bash
@@ -74,108 +73,108 @@ $ wrangler publish
 
 ### 👯 `generate`
 
-  Scaffold a project, including boilerplate code for a Rust library and a Cloudflare Worker.
+Scaffold a project, including boilerplate code for a Rust library and a Cloudflare Worker.
 
-  ```bash
-  wrangler generate <name> <template> --type=["webpack", "javascript", "rust"]
-  ```
+```bash
+wrangler generate <name> <template> --branch=<branch> --type=["webpack", "javascript", "rust"]
+```
 
-  All of the arguments and flags to this command are optional:
+All of the arguments and flags to this command are optional:
 
-  - `name`: defaults to `worker`
-  - `template`: defaults to the [`https://github.com/cloudflare/worker-template`](https://github.com/cloudflare/worker-template)
-  - `type`: defaults to `javascript` based on the ["worker-template"](https://github.com/cloudflare/worker-template/blob/master/wrangler.toml)
+- `name`: defaults to `worker`
+- `template`: defaults to the [`https://github.com/cloudflare/worker-template`](https://github.com/cloudflare/worker-template)
+- `type`: defaults to `javascript` based on the ["worker-template"](https://github.com/cloudflare/worker-template/blob/master/wrangler.toml)
+- `branch`: defaults to `master`
 
 ### 📥 `init`
 
-  Creates a skeleton `wrangler.toml` in an existing directory. This can be used as an alternative to `generate` if you prefer to clone a repository yourself.
+Creates a skeleton `wrangler.toml` in an existing directory. This can be used as an alternative to `generate` if you prefer to clone a repository yourself.
 
-  ```bash
-  wrangler init <name> --type=["webpack", "javascript", "rust"]
-  ```
+```bash
+wrangler init <name> --type=["webpack", "javascript", "rust"]
+```
 
-  All of the arguments and flags to this command are optional:
+All of the arguments and flags to this command are optional:
 
-  - `name`: defaults to the name of your working directory
-  - `type`: defaults to ["webpack"](https://developers.cloudflare.com/workers/tooling/wrangler/webpack).
+- `name`: defaults to the name of your working directory
+- `type`: defaults to ["webpack"](https://developers.cloudflare.com/workers/tooling/wrangler/webpack).
 
 ### 🦀⚙️ `build`
 
-  Build your project. This command looks at your `wrangler.toml` file and runs the build steps associated
-  with the `"type"` declared there.
+Build your project. This command looks at your `wrangler.toml` file and runs the build steps associated
+with the `"type"` declared there.
 
-  Additionally, you can configure different [environments](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/environments).
-
+Additionally, you can configure different [environments](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/environments).
 
 ### 🔓 `login`
 
-  Authenticate Wrangler with your Cloudflare login. This will prompt you with a Cloudflare account login page and is the alternative to `wrangler config`.
+Authenticate Wrangler with your Cloudflare login. This will prompt you with a Cloudflare account login page and is the alternative to `wrangler config`.
 
 ### 🔧 `config`
 
-  Authenticate Wrangler with a Cloudflare API Token. This is an interactive command that will prompt you for your API token:
+Authenticate Wrangler with a Cloudflare API Token. This is an interactive command that will prompt you for your API token:
 
-  ```bash
-  wrangler config
-  Enter API token:
-  superlongapitoken
-  ```
+```bash
+wrangler config
+Enter API token:
+superlongapitoken
+```
 
-  You can also provide your email and global API key (this is not recommended for security reasons):
+You can also provide your email and global API key (this is not recommended for security reasons):
 
-  ```bash
-  wrangler config --api-key
-  Enter email:
-  testuser@example.com
-  Enter global API key:
-  superlongapikey
-  ```
+```bash
+wrangler config --api-key
+Enter email:
+testuser@example.com
+Enter global API key:
+superlongapikey
+```
 
-  You can also [use environment variables](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/) to configure these values.
+You can also [use environment variables](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/) to configure these values.
 
 ### ☁️ 🆙 `publish`
 
-  Publish your Worker to Cloudflare. Several keys in your `wrangler.toml` determine whether you are publishing to a workers.dev subdomain or your own registered domain, proxied through Cloudflare.
+Publish your Worker to Cloudflare. Several keys in your `wrangler.toml` determine whether you are publishing to a workers.dev subdomain or your own registered domain, proxied through Cloudflare.
 
-  Additionally, you can configure different [environments](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/environments).
+Additionally, you can configure different [environments](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/environments).
 
-  You can also use environment variables to handle authentication when you publish a Worker.
+You can also use environment variables to handle authentication when you publish a Worker.
 
-  ```bash
-  # e.g.
-  CF_API_TOKEN=superlongtoken wrangler publish
-  # where
-  # $CF_API_TOKEN -> your Cloudflare API token
+```bash
+# e.g.
+CF_API_TOKEN=superlongtoken wrangler publish
+# where
+# $CF_API_TOKEN -> your Cloudflare API token
 
-  CF_API_KEY=superlongapikey CF_EMAIL=testuser@example.com wrangler publish
-  # where
-  # $CF_API_KEY -> your Cloudflare API key
-  # $CF_EMAIL -> your Cloudflare account email
-  ```
+CF_API_KEY=superlongapikey CF_EMAIL=testuser@example.com wrangler publish
+# where
+# $CF_API_KEY -> your Cloudflare API key
+# $CF_EMAIL -> your Cloudflare account email
+```
 
 ### 🗂 `kv`
 
-  Interact with your Workers KV store. This is actually a whole suite of subcommands. Read more about in [Wrangler KV Documentation](https://developers.cloudflare.com/workers/tooling/wrangler/kv_commands).
+Interact with your Workers KV store. This is actually a whole suite of subcommands. Read more about in [Wrangler KV Documentation](https://developers.cloudflare.com/workers/tooling/wrangler/kv_commands).
 
 ### 👂 `dev`
 
-  `wrangler dev` works very similarly to `wrangler preview` except that instead of opening your browser to preview your worker, it will start a server on localhost that will execute your worker on incoming HTTP requests. From there you can use cURL, Postman, your browser, or any other HTTP client to test the behavior of your worker before publishing it.
+`wrangler dev` works very similarly to `wrangler preview` except that instead of opening your browser to preview your worker, it will start a server on localhost that will execute your worker on incoming HTTP requests. From there you can use cURL, Postman, your browser, or any other HTTP client to test the behavior of your worker before publishing it.
 
-  You should run wrangler dev from your worker directory, and if your worker makes any requests to a backend, you should specify the host with `--host example.com`.
+You should run wrangler dev from your worker directory, and if your worker makes any requests to a backend, you should specify the host with `--host example.com`.
 
-  From here you should be able to send HTTP requests to `localhost:8787` along with any headers and paths, and your worker should execute as expected. Additionally, you should see console.log messages and exceptions appearing in your terminal.
+From here you should be able to send HTTP requests to `localhost:8787` along with any headers and paths, and your worker should execute as expected. Additionally, you should see console.log messages and exceptions appearing in your terminal.
 
-  ```bash
+```bash
 👂 Listening on http://localhost:8787
-  [2020-02-18 19:37:08] GET example.com/ HTTP/1.1 200 OK
-  ```
+[2020-02-18 19:37:08] GET example.com/ HTTP/1.1 200 OK
+```
 
-  All of the arguments and flags to this command are optional:
+All of the arguments and flags to this command are optional:
 
-  - `env`: environment to build
-  - `host`: domain to test behind your worker. defaults to example.com
-  - `ip`: ip to listen on. defaults to localhost
-  - `port`: port to listen on. defaults to 8787
+- `env`: environment to build
+- `host`: domain to test behind your worker. defaults to example.com
+- `ip`: ip to listen on. defaults to localhost
+- `port`: port to listen on. defaults to 8787
 
 ## Additional Documentation
 
