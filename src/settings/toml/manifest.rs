@@ -241,21 +241,18 @@ impl Manifest {
                 Ok(())
             };
 
+        let top_level_route_config = self.route_config();
+
         if let Some(env) = env {
-            if let Some(env_route_cfg) =
-                env.route_config(self.account_id.clone(), self.zone_id.clone())
-            {
+            if let Some(env_route_cfg) = env.route_config(&top_level_route_config) {
                 add_routed_deployments(&env_route_cfg)
+            } else if top_level_route_config.is_zoned() {
+                failure::bail!("you must specify route(s) per environment for zoned deploys.");
             } else {
-                let config = self.route_config();
-                if config.is_zoned() {
-                    failure::bail!("you must specify route(s) per environment for zoned deploys.");
-                } else {
-                    add_routed_deployments(&config)
-                }
+                add_routed_deployments(&top_level_route_config)
             }
         } else {
-            add_routed_deployments(&self.route_config())
+            add_routed_deployments(&top_level_route_config)
         }?;
 
         let crons = match env {
