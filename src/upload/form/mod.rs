@@ -17,7 +17,7 @@ use crate::sites::AssetManifest;
 use crate::wranglerjs;
 
 use plain_text::PlainText;
-pub use project_assets::{ModuleConfig, ModuleType};
+pub use project_assets::{Module, ModuleConfig, ModuleType};
 use project_assets::{ModulesAssets, ServiceWorkerAssets};
 use text_blob::TextBlob;
 use wasm_module::WasmModule;
@@ -61,10 +61,10 @@ pub fn build(
         }
     }
 
-    if let Some(asset_manifest) = asset_manifest {
+    if let Some(asset_manifest) = &asset_manifest {
         log::info!("adding __STATIC_CONTENT_MANIFEST");
         let binding = "__STATIC_CONTENT_MANIFEST".to_string();
-        let asset_manifest_blob = get_asset_manifest_blob(asset_manifest)?;
+        let asset_manifest_blob = get_asset_manifest_blob(&asset_manifest)?;
         let text_blob = TextBlob::new(asset_manifest_blob, binding)?;
         text_blobs.push(text_blob);
     }
@@ -122,6 +122,7 @@ pub fn build(
                     };
 
                     let module_config = ModuleConfig::new(main, dir, rules);
+
                     let assets = ModulesAssets::new(
                         module_config.get_modules()?,
                         kv_namespaces.to_vec(),
@@ -131,7 +132,17 @@ pub fn build(
                         usage_model,
                     )?;
 
-                    modules_worker::build_form(&assets, session_config)
+                    if let Some(asset_manifest) = &asset_manifest {
+                        log::info!("adding STATIC_CONTENT_MANIFEST to the module.");
+                        let manifest_blob = get_asset_manifest_blob(&asset_manifest)?;
+                        return modules_worker::build_form_with_manifest(
+                            &assets,
+                            session_config,
+                            manifest_blob,
+                        );
+                    }
+
+                    return modules_worker::build_form(&assets, session_config);
                 }
             },
             None => {
@@ -183,7 +194,7 @@ pub fn build(
     }
 }
 
-fn get_asset_manifest_blob(asset_manifest: AssetManifest) -> Result<String> {
+fn get_asset_manifest_blob(asset_manifest: &AssetManifest) -> Result<String> {
     let asset_manifest = serde_json::to_string(&asset_manifest)?;
     Ok(asset_manifest)
 }

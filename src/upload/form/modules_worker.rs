@@ -1,5 +1,6 @@
 use std::fs::File;
 
+
 use anyhow::Result;
 use reqwest::blocking::multipart::{Form, Part};
 use serde::Serialize;
@@ -19,7 +20,7 @@ struct Metadata {
 
 pub fn build_form(
     assets: &ModulesAssets,
-    session_config: Option<serde_json::Value>,
+    session_config: Option<serde_json::Value>
 ) -> Result<Form> {
     let mut form = Form::new();
 
@@ -27,6 +28,36 @@ pub fn build_form(
     // "metadata" part be set first, so this order is important.
     form = add_metadata(form, assets)?;
     form = add_files(form, assets)?;
+
+    if let Some(session_config) = session_config {
+        form = add_session_config(form, session_config)?
+    }
+
+    log::info!("building form");
+    log::info!("{:#?}", &form);
+
+    Ok(form)
+}
+
+pub fn build_form_with_manifest(
+    assets: &ModulesAssets,
+    session_config: Option<serde_json::Value>,
+    static_manifest: String,
+) -> Result<Form> {
+    let mut form = Form::new();
+
+    // The preview service in particular streams the request form, and requires that the
+    // "metadata" part be set first, so this order is important.
+    form = add_metadata(form, assets)?;
+    form = add_files(form, assets)?;
+
+    form = form.part(
+        "STATIC_CONTENT_MANIFEST",
+        Part::text(static_manifest)
+            .mime_str("text/plain")?
+            .file_name("STATIC_CONTENT_MANIFEST.txt"),
+    );
+
     if let Some(session_config) = session_config {
         form = add_session_config(form, session_config)?
     }
@@ -44,6 +75,7 @@ fn add_files(mut form: Form, assets: &ModulesAssets) -> Result<Form> {
             .file_name(name.clone());
         form = form.part(name.clone(), part);
     }
+
     Ok(form)
 }
 
