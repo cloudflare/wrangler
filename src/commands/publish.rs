@@ -3,6 +3,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use indicatif::{ProgressBar, ProgressStyle};
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::build::build_target;
@@ -10,6 +11,7 @@ use crate::deploy::{self, DeploymentSet};
 use crate::http::{self, Feature};
 use crate::kv::bulk;
 use crate::settings::global_user::GlobalUser;
+use crate::settings::toml::migrations::{MigrationTag, Migrations};
 use crate::settings::toml::Target;
 use crate::sites;
 use crate::terminal::emoji;
@@ -50,9 +52,19 @@ pub fn publish(
         Err(e) => Err(e),
     }?;
 
-    // We verify early here, so we don't perform pre-upload tasks if the upload will fail
     if let Some(build_config) = &target.build {
         build_config.verify_upload_dir()?;
+    }
+
+    if target.migrations.is_some() {
+        // Can't do this in the if below, since that one takes a mutable borrow on target
+        let client = http::legacy_auth_client(user);
+        let script_migration_tag = get_migration_tag(&client, target)?;
+
+        match target.migrations.as_mut().unwrap() {
+            Migrations::Adhoc { script_tag, .. } => *script_tag = script_migration_tag,
+            Migrations::List { script_tag, .. } => *script_tag = script_migration_tag,
+        };
     }
 
     if let Some(site_config) = &target.site {
@@ -215,4 +227,46 @@ fn validate_target_required_fields_present(target: &Target) -> Result<()> {
     };
 
     Ok(())
+}
+
+fn get_migration_tag(client: &Client, target: &Target) -> Result<MigrationTag, anyhow::Error> {
+    // Today, the easiest way to get metadata about a script (including the migration tag)
+    // is the list endpoint, as the individual script endpoint just returns the source code for a
+    // given script (and doesn't work at all for DOs). Once we add an individual script metadata
+    // endpoint, we could use that here instead of listing all of the scripts. Listing isn't too bad
+    // today though, as most accounts are limited to 30 scripts anyways.
+
+    let addr = format!(
+        "https://api.cloudflare.com/client/v4/accounts/{}/workers/scripts",
+        target.account_id.load()?
+    );
+
+    let res: ListScriptsV4ApiResponse = client.get(&addr).send()?.json()?;
+
+    let tag = match res.result.into_iter().find(|s| s.id == target.name) {
+        Some(ScriptResponse {
+            migration_tag: Some(tag),
+            ..
+        }) => MigrationTag::HasTag(tag),
+        Some(ScriptResponse {
+            migration_tag: None,
+            ..
+        }) => MigrationTag::NoTag,
+        None => MigrationTag::NoScript,
+    };
+
+    log::info!("Current MigrationTag: {:#?}", tag);
+
+    Ok(tag)
+}
+
+#[derive(Debug, Deserialize)]
+struct ListScriptsV4ApiResponse {
+    pub result: Vec<ScriptResponse>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ScriptResponse {
+    pub id: String,
+    pub migration_tag: Option<String>,
 }

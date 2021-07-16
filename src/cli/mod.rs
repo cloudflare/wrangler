@@ -36,7 +36,7 @@ use std::path::PathBuf;
 use crate::commands::dev::Protocol;
 use crate::preview::HttpMethod;
 use crate::settings::toml::migrations::{
-    DurableObjectsMigration, Migration, MigrationConfig, Migrations, RenameClass, TransferClass,
+    DurableObjectsMigration, Migration, MigrationTag, Migrations, RenameClass, TransferClass,
 };
 use crate::settings::toml::TargetType;
 
@@ -255,17 +255,25 @@ pub struct AdhocMigration {
     delete_class: Vec<String>,
 
     /// Rename a durable object class
-    #[structopt(name = "rename-class", long, number_of_values = 2)]
+    #[structopt(name = "rename-class", long, number_of_values = 2, value_names(&["from class", "to class"]))]
     rename_class: Vec<String>,
 
     /// Transfer all durable objects associated with a class in another script to a class in
     /// this script
-    #[structopt(name = "transfer-class", long, number_of_values = 3)]
+    #[structopt(name = "transfer-class", long, number_of_values = 3, value_names(&["from script", "from class", "to class"]))]
     transfer_class: Vec<String>,
+
+    /// Specify the existing migration tag for the script.
+    #[structopt(name = "old-tag", long)]
+    old_tag: Option<String>,
+
+    /// Specify the new migration tag for the script
+    #[structopt(name = "new-tag", long)]
+    new_tag: Option<String>,
 }
 
 impl AdhocMigration {
-    pub fn into_migration_config(self) -> Option<MigrationConfig> {
+    pub fn into_migrations(self) -> Option<Migrations> {
         let migration = DurableObjectsMigration {
             new_classes: self.new_class,
             deleted_classes: self.delete_class,
@@ -305,12 +313,20 @@ impl AdhocMigration {
             && migration.renamed_classes.is_empty()
             && migration.transferred_classes.is_empty();
 
-        if !is_migration_empty {
-            Some(MigrationConfig {
-                tag: None,
-                migration: Migration {
+        if !is_migration_empty || self.old_tag.is_some() || self.new_tag.is_some() {
+            let migration = if !is_migration_empty {
+                Some(Migration {
                     durable_objects: migration,
-                },
+                })
+            } else {
+                None
+            };
+
+            Some(Migrations::Adhoc {
+                script_tag: MigrationTag::Unknown,
+                provided_old_tag: self.old_tag,
+                new_tag: self.new_tag,
+                migration,
             })
         } else {
             None
@@ -342,6 +358,10 @@ mod tests {
         let command = Cli::from_iter(&[
             "wrangler",
             "publish",
+            "--old-tag",
+            "oldTag",
+            "--new-tag",
+            "newTag",
             "--new-class",
             "newA",
             "--new-class",
@@ -369,17 +389,19 @@ mod tests {
 
         if let Command::Publish { migration, .. } = command {
             assert_eq!(
-                migration.into_migration_config(),
-                Some(MigrationConfig {
-                    tag: None,
-                    migration: Migration {
+                migration.into_migrations(),
+                Some(Migrations::Adhoc {
+                    script_tag: MigrationTag::Unknown,
+                    provided_old_tag: Some(String::from("oldTag")),
+                    new_tag: Some(String::from("newTag")),
+                    migration: Some(Migration {
                         durable_objects: DurableObjectsMigration {
                             new_classes: vec![String::from("newA"), String::from("newB")],
                             deleted_classes: vec![String::from("deleteA"), String::from("deleteB")],
                             renamed_classes: vec![rename_class("A"), rename_class("B")],
                             transferred_classes: vec![transfer_class("A"), transfer_class("B")],
                         }
-                    }
+                    })
                 })
             );
         } else {
