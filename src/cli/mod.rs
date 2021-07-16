@@ -11,6 +11,7 @@ pub mod secret;
 pub mod subdomain;
 pub mod tail;
 pub mod whoami;
+pub mod zone;
 
 pub mod exec {
     pub use super::build::build;
@@ -28,6 +29,7 @@ pub mod exec {
     pub use super::subdomain::subdomain;
     pub use super::tail::tail;
     pub use super::whoami::whoami;
+    pub use super::zone::zone;
 }
 
 use std::net::IpAddr;
@@ -241,6 +243,14 @@ pub enum Command {
         /// Specifies a log to report (e.g. --log=1619728882567.log)
         #[structopt(name = "log", long)]
         log: Option<PathBuf>,
+    },
+
+    /// Fetch details on the specified Cloudflare zone
+    #[structopt(name = "zone")]
+    Zone {
+        /// The zone to fetch information for
+        #[structopt(index = 1, required = true)]
+        zone: String,
     },
 }
 

@@ -19,3 +19,7 @@ pub fn cyan<D>(msg: D) -> StyledObject<D> {
 pub fn bold<D>(msg: D) -> StyledObject<D> {
     style(msg).bold()
 }
+
+pub fn underline<D>(msg: D) -> StyledObject<D> {
+    style(msg).underlined()
+}

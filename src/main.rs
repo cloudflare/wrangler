@@ -113,5 +113,6 @@ fn run() -> Result<()> {
         Command::Report { log } => commands::report::run(log.as_deref()).map(|_| {
             eprintln!("Report submission sucessful. Thank you!");
         }),
+        Command::Zone { zone } => exec::zone(zone),
     }
 }

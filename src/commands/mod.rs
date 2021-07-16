@@ -14,6 +14,7 @@ pub mod secret;
 pub mod subdomain;
 pub mod tail;
 pub mod whoami;
+pub mod zone;
 
 pub use self::config::global_config;
 pub use self::preview::run as preview;
@@ -25,6 +26,7 @@ pub use secret::{create_secret, delete_secret, list_secrets};
 pub use subdomain::get_subdomain;
 pub use subdomain::set_subdomain;
 pub use whoami::whoami;
+pub use zone::zone;
 
 use anyhow::Result;
 use regex::Regex;

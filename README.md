@@ -177,6 +177,21 @@ $ wrangler publish
   - `ip`: ip to listen on. defaults to localhost
   - `port`: port to listen on. defaults to 8787
 
+### 🌎 `zone`
+
+  Fetch the Cloudflare Account & Zone ID of the supplied domain name.
+  
+  You can use the returned ID as the `zone_id` field of your `wrangler.toml` configuration file to publish a Worker on a custom domain.
+
+  ```bash
+  $ wrangler zone example.com
+  Zone information for example.com
+
+  Zone ID: e405e53ee0fb1190c104316d5d306a19
+  Account: Example Inc. (0f384009b201d49267977ca75b6b5918)
+  Status: Active
+  ```
+
 ## Additional Documentation
 
 All information regarding wrangler or Cloudflare Workers is located in the [Cloudflare Workers Developer Docs](https://developers.cloudflare.com/workers/). This includes:
