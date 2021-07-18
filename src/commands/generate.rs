@@ -35,7 +35,7 @@ pub fn generate(
     log::info!("Generating a new worker project with name '{}'", new_name);
     run_generate(&new_name, template)?;
 
-    let config_path = PathBuf::from("./").join(&name);
+    let config_path = PathBuf::from("./").join(&new_name);
     // TODO: this is tightly coupled to our site template. Need to remove once
     // we refine our generate logic.
     let generated_site = if site {

@@ -32,6 +32,32 @@ fn it_generates_with_arguments() {
     cleanup(name);
 }
 
+#[test]
+fn it_generates_multiple_times_with_same_name_ignoring_previous_manifest() {
+    let name = "demo";
+    let template = "https://github.com/cloudflare/rustwasm-worker-template";
+    let project_type = "webpack";
+
+    generate(Some(name), Some(template), Some(project_type));
+
+    assert_eq!(Path::new(name).exists(), true);
+
+    // replace the old manifest with a malformed one to test if a new run fails
+    // by using it
+    let og_manifest = Path::new(name).join("wrangler.toml");
+    assert_eq!(og_manifest.exists(), true);
+    fs::write(&og_manifest, "{% nope %}").unwrap();
+
+    generate(Some(name), Some(template), Some(project_type));
+
+    let new_name = "demo-1";
+
+    assert_eq!(Path::new(new_name).exists(), true);
+
+    cleanup(name);
+    cleanup(new_name);
+}
+
 pub fn generate(name: Option<&str>, template: Option<&str>, project_type: Option<&str>) {
     let mut wrangler = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
     if name.is_none() && template.is_none() && project_type.is_none() {
