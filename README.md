@@ -155,7 +155,7 @@ $ wrangler publish
 
 ### 🗂 `kv`
 
-  Interact with your Workers KV store. This is actually a whole suite of subcommands. Read more about in [Wrangler KV Documentation](https://developers.cloudflare.com/workers/tooling/wrangler/kv_commands).
+  Interact with your Workers KV store. This is actually a whole suite of subcommands. Read more about in [Wrangler KV Documentation](https://developers.cloudflare.com/workers/cli-wrangler/commands#kv).
 
 ### 👂 `dev`
 
